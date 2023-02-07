@@ -30,18 +30,26 @@ import /init.recovery.qcom_decrypt.rc
 on init
     start touch
 
-on boot
-    start health-hal-2-1
-
 on fs
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
     mount vfat /dev/block/bootdevice/by-name/modem${ro.boot.slot_suffix} /firmware ro
-    export LD_LIBRARY_PATH /sbin:/vendor/lib64:/vendor/lib64/hw
 
 on post-fs
     start boot-hal-1-1
 
-on property:ro.crypto.type=file
-    setprop ro.crypto.state encrypted
-    setprop twrp.apex.loaded true
+on late-fs
+    start keymasterd
+    start health-hal-2-1
+
+service keymasterd /system/bin/keymasterd
+     user root
+     group root
+     disabled
+     seclabel u:r:recovery:s0
+
+service health-hal-2-1 /system/bin/android.hardware.health@2.1-service
+    user root
+    group root
+    disabled
+    seclabel u:r:recovery:s0
